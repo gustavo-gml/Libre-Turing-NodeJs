@@ -1,0 +1,21 @@
+@charset "UTF-8";
+
+/* Apenas ajustes visuais de validação que não existem no global */
+
+/* Feedback de Sucesso (Borda Verde) */
+.input-sucesso {
+    border-color: #28a745 !important;
+    background-color: #f0fff4; /* Fundo levemente verde */
+    color: #155724;
+}
+
+/* Feedback de Erro (Borda Vermelha) */
+.input-erro {
+    border-color: #dc3545 !important;
+    background-color: #fff5f5; /* Fundo levemente vermelho */
+}
+
+/* Ajuste específico para o Datalist não ficar colado no input hidden */
+input[list] {
+    cursor: text;
+}

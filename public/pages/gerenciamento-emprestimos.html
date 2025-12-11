@@ -3,60 +3,25 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Gerenciamento de Empréstimos - Libre Turing</title>
+  <title>Gerenciamento de Devoluções</title>
+  
   <link rel="stylesheet" href="../styles/style-global.css">
   <link rel="stylesheet" href="../styles/style-consultas.css">
   <link rel="icon" type="image/png" href="../images/favicon.ico">
   
-  <style>
-    /* Estilos extras para os status */
-    .status-ativo {
-        color: #d9534f; /* Vermelho */
-        font-weight: bold;
-    }
-    .status-devolvido {
-        color: #5cb85c; /* Verde */
-        font-weight: bold;
-    }
-    .btn-devolver {
-        background-color: #28a745;
-        color: white;
-        border: none;
-        padding: 6px 12px;
-        cursor: pointer;
-        border-radius: 4px;
-        font-size: 0.9em;
-        margin-right: 5px;
-    }
-    .btn-devolver:hover {
-        background-color: #218838;
-    }
-    .btn-excluir {
-        background-color: #ff4d4d;
-        color: white;
-        border: none;
-        padding: 6px 12px;
-        cursor: pointer;
-        border-radius: 4px;
-        font-size: 0.9em;
-    }
-
-    .btn-excluir:hover {
-        background-color: #ff0000;
-        
-    }
-  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
-  <h1>Consultar Empréstimos</h1>
-  <a href="menu.html" class="back-link">← Voltar</a>
   
-  <form id="form-busca-emprestimos" class="form-busca-container">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px">
+  <h1>Gerenciamento de Devoluções</h1>
+  <a href="menu.html" class="back-link">← Voltar ao Menu</a>
+  
+  <form id="form-busca-devolucao" class="container-busca">
+    <svg class="icone-busca" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
       <path d="M10 2a8 8 0 1 0 5.657 13.657l5.385 5.385 1.414-1.414-5.385-5.385A8 8 0 0 0 10 2Zm0 2a6 6 0 1 1 0 12A6 6 0 0 1 10 4Z"></path>
     </svg>
-    <input id="texto-form-emprestimo" type="text" placeholder="Buscar por aluno ou livro...">
+    <input id="texto-busca" class="input-busca" type="text" placeholder="Buscar por aluno, livro ou código...">
   </form>
 
   <div class="container-tabela">
@@ -68,9 +33,9 @@
           <th>Livro</th>
           <th>Cód. Barras</th>
           <th>Data Emp.</th>
-          <th>Data Prev.</th>
+          <th>Prev. Devolução</th>
           <th>Status</th>
-          <th>Ações</th>
+          <th style="width: 180px;">Ações</th>
         </tr>
       </thead>
       <tbody id="lista-emprestimos">
@@ -78,154 +43,129 @@
     </table>
   </div>
 
-  <div class="container-consulta">
-    <a class="link-consulta" href="../pages/menu.html">Voltar Para o Menu</a>
-  </div>
-
   <script>
-    // --- FUNÇÕES AUXILIARES ---
+    const tableEmprestimos = document.getElementById("lista-emprestimos");
 
-    function carregarDoStorage() {
-      const dados = JSON.parse(localStorage.getItem("dados")) || {};
-      if (!dados.emprestimos) dados.emprestimos = [];
-      return dados;
-    }
-
-    function salvarNoStorage(objeto) {
-      localStorage.setItem("dados", JSON.stringify(objeto));
-    }
-
-    // Formata data de AAAA-MM-DD para DD/MM/AAAA
     function formatarData(dataISO) {
       if (!dataISO) return "-";
-      const partes = dataISO.split("-");
+      const dataPura = dataISO.split('T')[0];
+      const partes = dataPura.split("-");
       return `${partes[2]}/${partes[1]}/${partes[0]}`;
     }
 
-    // --- RENDERIZAÇÃO ---
-    const tableEmprestimos = document.getElementById("lista-emprestimos");
+    // --- CARREGAR DADOS ---
+    function carregarEmprestimos() {
+      fetch('http://localhost:3000/api/emprestimos')
+        .then(res => res.json())
+        .then(data => {
+            if(data.error) {
+                console.error("Erro SQL:", data.error);
+                return;
+            }
+            renderizarTabela(data);
+        })
+        .catch(err => console.error("Erro de conexão:", err));
+    }
 
-    function renderizarTabela() {
-      const dados = carregarDoStorage();
-      tableEmprestimos.innerHTML = ""; // Limpa antes de desenhar
+    function renderizarTabela(emprestimos) {
+      tableEmprestimos.innerHTML = ""; 
 
-      // Ordena: Primeiro os "Ativos", depois os "Devolvidos"
-      const listaOrdenada = dados.emprestimos.sort((a, b) => {
-          if (a.status === "Ativo" && b.status !== "Ativo") return -1;
-          if (a.status !== "Ativo" && b.status === "Ativo") return 1;
-          return 0;
-      });
+      if (!emprestimos || emprestimos.length === 0) {
+          tableEmprestimos.innerHTML = "<tr><td colspan='8' style='text-align:center; padding: 2rem;'>Nenhum histórico encontrado.</td></tr>";
+          return;
+      }
 
-      listaOrdenada.forEach(emp => {
+      emprestimos.forEach(emp => {
         let tr = document.createElement("tr");
 
-        let tdId = document.createElement("td");
-        let tdAluno = document.createElement("td");
-        let tdLivro = document.createElement("td");
-        let tdCodigo = document.createElement("td");
-        let tdDataEmp = document.createElement("td");
-        let tdDataPrev = document.createElement("td");
-        let tdStatus = document.createElement("td");
-        let tdAcoes = document.createElement("td");
-
-        // Preenche dados
-        tdId.textContent = emp.id;
-        tdAluno.textContent = emp.aluno.nome;
-        tdLivro.textContent = emp.livro.nome;
-        tdCodigo.textContent = emp.livro.codigoBarras;
-        tdDataEmp.textContent = formatarData(emp.dataEmprestimo);
-        tdDataPrev.textContent = formatarData(emp.dataDevolucaoPrevista);
+        // Atraso
+        const hoje = new Date().toISOString().split('T')[0];
+        const dataPrevista = emp.data_prevista_devolucao ? emp.data_prevista_devolucao.split('T')[0] : "";
+        let textoDataPrev = formatarData(emp.data_prevista_devolucao);
         
-        // Lógica do Status
-        tdStatus.textContent = emp.status;
-        if (emp.status === "Ativo") {
-            tdStatus.className = "status-ativo";
-
-            // Botão DEVOLVER (Só aparece se estiver Ativo)
-            const btnDevolver = document.createElement("button");
-            btnDevolver.textContent = "Devolver ↩";
-            btnDevolver.className = "btn-devolver";
-            btnDevolver.onclick = function() { realizarDevolucao(emp.id); };
-            tdAcoes.appendChild(btnDevolver);
-
-        } else {
-            tdStatus.className = "status-devolvido";
+        if (emp.status === 'Ativo' && hoje > dataPrevista) {
+            textoDataPrev = `<span class="texto-atrasado">${textoDataPrev} (Atrasado)</span>`;
         }
 
-        // Botão EXCLUIR (Sempre aparece, caso tenha cadastrado errado)
-        const btnExcluir = document.createElement("button");
-        btnExcluir.textContent = "Excluir";
-        btnExcluir.className = "btn-excluir";
-        btnExcluir.onclick = function() { excluir(emp.id); };
-        tdAcoes.appendChild(btnExcluir);
+        // Status
+        let htmlStatus = '';
+        if (emp.status === 'Ativo') {
+            htmlStatus = `<span class="status-badge status-ativo">Emprestado</span>`;
+        } else {
+            htmlStatus = `<span class="status-badge status-devolvido">Devolvido</span>`;
+        }
 
-        // Monta a linha
-        tr.appendChild(tdId);
-        tr.appendChild(tdAluno);
-        tr.appendChild(tdLivro);
-        tr.appendChild(tdCodigo);
-        tr.appendChild(tdDataEmp);
-        tr.appendChild(tdDataPrev);
-        tr.appendChild(tdStatus);
-        tr.appendChild(tdAcoes);
+        // Botões
+        let btnAcao = '';
+        if (emp.status === 'Ativo') {
+            btnAcao = `
+                <button class="btn-pequeno" style="background-color:#28a745; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="devolver(${emp.id})">
+                    <i class="fa-solid fa-rotate-left"></i> Devolver
+                </button>
+            `;
+        } else {
+            btnAcao = `<span style="color: #28a745; font-weight:bold; font-size: 0.9rem; margin-right: 10px;"><i class="fa-solid fa-check"></i> OK</span>`;
+        }
 
+        const btnExcluir = `
+            <button class="btn-pequeno" style="background-color:#dc3545; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="excluir(${emp.id})">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        `;
+
+        tr.innerHTML = `
+           <td>${emp.id}</td>
+           <td>${emp.nome_aluno}</td>
+           <td>${emp.nome_livro}</td>
+           <td>${emp.codigo_de_barras}</td>
+           <td>${formatarData(emp.data_emprestimo)}</td>
+           <td>${textoDataPrev}</td>
+           <td>${htmlStatus}</td>
+           <td style="white-space: nowrap;">
+              ${btnAcao}
+              ${btnExcluir}
+           </td>
+        `;
         tableEmprestimos.appendChild(tr);
       });
     }
 
     // --- AÇÕES ---
-
-    function realizarDevolucao(id) {
-        if (!confirm("Confirmar a devolução deste livro?")) return;
-
-        const dados = carregarDoStorage();
-        const index = dados.emprestimos.findIndex(e => e.id === id);
-
-        if (index !== -1) {
-            dados.emprestimos[index].status = "Devolvido";
-            // Opcional: Salvar data real da devolução
-            // dados.emprestimos[index].dataDevolucaoReal = new Date().toISOString().split('T')[0];
-            
-            salvarNoStorage(dados);
-            renderizarTabela();
-            alert("Devolução registrada com sucesso!");
-        }
+    function devolver(id) {
+        if(!confirm("Confirmar a devolução deste livro?")) return;
+        fetch(`http://localhost:3000/api/emprestimos/${id}/devolver`, { method: 'PUT' })
+        .then(res => res.json())
+        .then(() => { alert("Livro devolvido com sucesso!"); carregarEmprestimos(); });
     }
 
     function excluir(id) {
-        if (!confirm("ATENÇÃO: Isso apagará o registro do histórico.\n\nPara devolver o livro, use o botão 'Devolver'.\nDeseja realmente excluir?")) return;
-        
-        const dados = carregarDoStorage();
-        dados.emprestimos = dados.emprestimos.filter(l => l.id !== id);
-        salvarNoStorage(dados);
-        renderizarTabela();
+        if(!confirm("Tem certeza que deseja apagar este registro do histórico?")) return;
+        fetch(`http://localhost:3000/api/emprestimos/${id}`, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(() => carregarEmprestimos());
     }
 
     // --- BUSCA ---
-    const campoBusca = document.getElementById("texto-form-emprestimo");
-
-    campoBusca.addEventListener("input", function (e) {
-      const texto = campoBusca.value.toLowerCase();
+    const campoBusca = document.getElementById("texto-busca");
+    campoBusca.addEventListener("input", function () {
+      const texto = this.value.toLowerCase();
       const linhas = document.querySelectorAll("#lista-emprestimos tr");
-
       linhas.forEach(tr => {
-        // Coluna 1 = Aluno, Coluna 2 = Livro
-        const aluno = tr.querySelectorAll("td")[1].textContent.toLowerCase();
-        const livro = tr.querySelectorAll("td")[2].textContent.toLowerCase();
-
-        if (aluno.includes(texto) || livro.includes(texto)) {
-            tr.style.display = "";
+        if(tr.cells.length < 2) return;
+        const aluno = tr.cells[1].textContent.toLowerCase();
+        const livro = tr.cells[2].textContent.toLowerCase();
+        const codigo = tr.cells[3].textContent.toLowerCase();
+        if (aluno.includes(texto) || livro.includes(texto) || codigo.includes(texto)) {
+          tr.style.display = "";
         } else {
-            tr.style.display = "none";
+          tr.style.display = "none";
         }
       });
     });
 
-    document.getElementById("form-busca-emprestimos").addEventListener("submit", (e) => e.preventDefault());
+    document.getElementById("form-busca-devolucao").addEventListener("submit", e => e.preventDefault());
 
-    // Inicia a tabela
-    renderizarTabela();
-
+    carregarEmprestimos();
   </script>
 
 </body>

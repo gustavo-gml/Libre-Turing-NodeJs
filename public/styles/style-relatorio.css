@@ -1,0 +1,231 @@
+@charset "UTF-8";
+
+/* =========================================================
+   1. CONFIGURAÇÃO DE FONTE E TAMANHO (PADRÃO GLOBAL)
+   ========================================================= */
+html {
+    font-size: 62.5%; /* 1rem = 10px */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif; 
+}
+
+body {
+    background-color: #f4f6f7;
+    color: #333;
+    line-height: 1.6;
+    padding: 2rem;
+    font-size: 1.6rem; 
+}
+
+.container {
+    max-width: 110rem;
+    margin: 0 auto;
+    background-color: #ffffff;
+    padding: 2rem 3rem;
+    border-radius: 0.8rem;
+    box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
+}
+
+/* =========================================================
+   2. CABEÇALHO E TEXTOS
+   ========================================================= */
+h2 {
+    color: #000;
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 0.1rem solid #e9ecef;
+    font-size: 2.4rem; 
+    margin-top: 1.5rem;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 2rem;
+    text-decoration: none;
+    color: #6c757d;
+    font-weight: bold;
+    font-size: 1.4rem;
+    transition: all 0.3s ease;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+/* Resumo (Total Geral) */
+#resumo-topo {
+    margin-bottom: 1.5rem;
+    font-size: 1.6rem;
+    color: #666;
+    text-align: center;
+}
+
+#total-geral {
+    color: #28a745;
+    font-weight: 800;
+}
+
+/* =========================================================
+   3. BARRA DE PESQUISA
+   ========================================================= */
+.container-busca {
+    display: flex !important;           
+    flex-direction: row !important;    
+    align-items: center !important;    
+    
+    width: 100%;
+    height: 4.5rem; 
+    border: 0.2rem solid #28a745;
+    border-radius: 5rem;
+    padding: 0 1.5rem;                    
+    background-color: #fff;
+    box-sizing: border-box;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.icone-busca {
+    width: 2rem;
+    height: 2rem;
+    min-width: 2rem;
+    color: #28a745;
+    fill: currentColor;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;                
+}
+
+.input-busca {
+    flex: 1;                            
+    height: 100%;                      
+    border: none !important;            
+    outline: none !important;           
+    background: transparent !important; 
+    box-shadow: none !important;
+    font-size: 1.6rem; 
+    color: #333;
+    margin: 0 !important;               
+    padding: 0 !important;
+}
+
+.input-busca::placeholder {
+    color: #999;
+    opacity: 1;
+}
+
+/* =========================================================
+   4. TABELA
+   ========================================================= */
+.container-tabela {
+    overflow-x: auto; 
+    background-color: #ffffff;
+    border-radius: 0.8rem; 
+    box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1); 
+    margin-top: 2rem; 
+    padding: 0.5rem;
+}
+
+.container-tabela table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    color: #333;
+}
+
+.container-tabela thead {
+    background-color: #28a745;
+    color: #ffffff;
+}
+
+.container-tabela th,
+.container-tabela td {
+    padding: 1rem 1.2rem;
+    vertical-align: middle;
+    font-size: 1.6rem;
+}
+
+.container-tabela th {
+    font-weight: bold;
+    text-transform: uppercase; 
+    font-size: 1.4rem;
+    letter-spacing: 0.05rem; 
+}
+
+.container-tabela th:nth-child(2), .container-tabela td:nth-child(2),
+.container-tabela th:nth-child(3), .container-tabela td:nth-child(3) {
+    text-align: center;
+}
+
+.container-tabela tbody tr {
+    border-bottom: 0.1rem solid #eeeeee; 
+}
+.container-tabela tbody tr:last-of-type {
+    border-bottom: none;
+}
+.container-tabela tbody tr:nth-of-type(even) {
+    background-color: #f9f9f9;
+}
+.container-tabela tbody tr:hover {
+    background-color: #f0f0f0;
+}
+
+/* =========================================================
+   5. BADGES DE STATUS
+   ========================================================= */
+.status-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.4rem;
+    font-weight: bold;
+    font-size: 1.2rem; 
+    display: inline-block;
+    text-align: center;
+    min-width: 8rem;
+}
+
+.status-ok {
+    background-color: #d4edda; 
+    color: #155724;            
+    border: 0.1rem solid #c3e6cb;
+}
+
+.status-esgotado {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 0.1rem solid #f5c6cb;
+}
+
+/* =========================================================
+   6. BOTÃO FINAL (VOLTAR AO MENU)
+   ========================================================= */
+.container-consulta {
+    display: flex;
+    justify-content: flex-start; /* Alinha à esquerda, igual sua tabela */
+    gap: 1rem; 
+    margin-top: 2rem; /* Espaço entre a tabela e o botão */
+}
+
+.link-consulta {
+    background-color: #28a745;
+    color: white;
+    border: 0.2rem solid #28a745; 
+    border-radius: 0.4rem; 
+    cursor: pointer;
+    width: auto;
+    padding: 0.5em 1.5em; 
+    transition: all 0.3s ease;
+    text-decoration: none;
+    font-size: 1.6rem; 
+    font-weight: bold;
+}
+
+.link-consulta:hover {
+    background-color: #218838;
+    border-color: #000000;
+}

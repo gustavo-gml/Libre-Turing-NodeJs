@@ -4,190 +4,261 @@
 <head>
   <meta charset="UTF-8">
   <title>Listagem de Acervo - Libre Turing</title>
+  
   <link rel="stylesheet" href="../styles/style-global.css">
   <link rel="stylesheet" href="../styles/style-consultas.css">
   <link rel="icon" type="image/png" href="../images/favicon.ico">
+
+  <style>
+    .status-badge {
+        padding: 0.4rem 0.8rem;
+        border-radius: 0.4rem;
+        font-weight: bold;
+        font-size: 1.2rem;
+        display: inline-block;
+        text-align: center;
+        min-width: 100px;
+    }
+    .status-ok {
+        background-color: #d4edda; 
+        color: #155724;            
+        border: 1px solid #c3e6cb;
+    }
+    .status-alert {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+  </style>
 </head>
 
 <body>
-  <h1>Listagem de Acervo</h1>
-  <a href="consultas-livros.html" class="back-link">← Voltar</a>
-  <form id="form-busca-acervo" class="form-busca-container">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px">
-      <path d="M10 2a8 8 0 1 0 5.657 13.657l5.385 5.385 1.414-1.414-5.385-5.385A8 8 0 0 0 10 2Zm0 2a6 6 0 1 1 0 12A6 6 0 0 1 10 4Z"></path>
-    </svg>
-    <input id="texto-form" type="text" placeholder="Buscar exemplar por nome...">
-  </form>
+ 
+      <h1>Listagem de Acervo</h1>
+      <a href="consultas-livros.html" class="back-link">← Voltar</a>
 
-  <div class="container-tabela">
-    
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Livro</th>
-          <th>ISBN</th>
-          <th>Cód. Barras</th>
-          <th>Data Aquisição</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="lista-acervo">
-        </tbody>
-    </table>
+      <form id="form-busca-livro" class="container-busca">
+        <svg class="icone-busca" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M10 2a8 8 0 1 0 5.657 13.657l5.385 5.385 1.414-1.414-5.385-5.385A8 8 0 0 0 10 2Zm0 2a6 6 0 1 1 0 12A6 6 0 0 1 10 4Z"></path>
+        </svg>
+        <input id="texto-form" class="input-busca" type="text" placeholder="Buscar exemplar por título ou código...">
+      </form>
+
+      <div class="container-tabela">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Livro (Título)</th>
+              <th>ISBN</th>
+              <th>Cód. Barras</th>
+              <th>Data Aquisição</th>
+              <th>Status</th> <th style="width: 200px;">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="lista-acervo">
+            </tbody>
+        </table>
+      </div>
+
+      <div class="container-consulta">
+        <a class="link-consulta" href="../pages/menu.html">Voltar Para o Menu</a>
+      </div>
   </div>
 
-  <div class="container-consulta">
-    <a class="link-consulta" href="../pages/menu.html">Voltar Para o Menu</a>
-  </div>
+  <div id="modal-editar" class="modal-overlay">
+    <div class="modal-content">
+      
+      <div class="modal-header">
+        <h2>Editar Exemplar</h2>
+      </div>
+
+      <input type="hidden" id="edit-id"> 
+      
+      <div class="form-group">
+        <label>Livro (Título):</label>
+        <input type="text" id="edit-titulo" class="form-input" disabled style="background-color: #e9ecef; cursor: not-allowed;">
+      </div>
+
+      <div class="form-group">
+        <label>ISBN:</label>
+        <input type="text" id="edit-isbn" class="form-input" disabled style="background-color: #e9ecef; cursor: not-allowed;">
+      </div>
+
+      <div class="form-group">
+        <label for="edit-codigo">Código de Barras:</label>
+        <input type="text" id="edit-codigo" class="form-input">
+      </div>
+      
+      <div class="form-group">
+        <label for="edit-status">Status do Exemplar:</label>
+        <select id="edit-status" class="form-input">
+            <option value="Disponível">Disponível</option>
+            <option value="Manutenção">Manutenção</option>
+            <option value="Perdido">Perdido</option>
+            </select>
+        <small style="color: #666; font-size: 0.9em;">* "Emprestado" é gerenciado automaticamente pelo sistema.</small>
+      </div>
+
+      <div class="form-group">
+        <label for="edit-data">Data de Aquisição:</label>
+        <input type="date" id="edit-data" class="form-input">
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-cancelar" onclick="fecharModal()">Cancelar</button>
+        <button class="btn btn-salvar" onclick="salvarEdicao()">Salvar Alterações</button>
+      </div>
+    </div>
+
 
   <script>
-    // --- FUNÇÕES AUXILIARES ---
-
-    function salvarNoStorage(objeto) {
-      localStorage.setItem("dados", JSON.stringify(objeto));
-    }
-
-    function carregarDoStorage() {
-      const dados = JSON.parse(localStorage.getItem("dados")) || {};
-      // Garante estrutura básica caso não exista
-      if (!dados.acervo) dados.acervo = [];
-      if (!dados.livros) dados.livros = [];
-      return dados;
-    }
-
-    function formatarData(dataISO) {
-      // Transforma AAAA-MM-DD em DD/MM/AAAA para ficar bonito na tabela
-      if (!dataISO) return "-";
-      const partes = dataISO.split("-");
-      return `${partes[2]}/${partes[1]}/${partes[0]}`;
-    }
-
-    // --- CARREGAMENTO INICIAL ---
-
     const tableAcervo = document.getElementById("lista-acervo");
+    const modal = document.getElementById("modal-editar");
 
-    // Função para renderizar (desenhar) a tabela usando dados.acervo
-    function renderizarTabela() {
-      const dados = carregarDoStorage(); // Carrega sempre atualizado
-      tableAcervo.innerHTML = ""; // Limpa a tabela
+    // Cores dos status
+    function getStatusClass(status) {
+        if (status === 'Disponível') return 'status-ok';
+        if (status === 'Emprestado') return 'status-alert'; // Vermelho claro
+        if (status === 'Perdido') return 'status-alert';    // Pode criar uma cor específica se quiser
+        if (status === 'Manutenção') return 'status-alert'; // Ou criar um amarelo (.status-warning)
+        return '';
+    }
 
-      dados.acervo.forEach(item => {
+    function formatarDataVisual(dataISO) {
+       if (!dataISO) return "-";
+       const dataPura = dataISO.split('T')[0];
+       const partes = dataPura.split("-");
+       return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    // --- 1. CARREGAR ACERVO ---
+    function carregarAcervo() {
+      fetch('http://localhost:3000/api/acervo')
+        .then(res => res.json())
+        .then(itens => renderizarTabela(itens))
+        .catch(err => console.error("Erro:", err));
+    }
+
+    function renderizarTabela(itens) {
+      tableAcervo.innerHTML = ""; 
+      itens.forEach(item => {
         let tr = document.createElement("tr");
+        const classeStatus = getStatusClass(item.status);
 
-        // Criação das células
-        let tdId = document.createElement("td");
-        let tdNome = document.createElement("td");
-        let tdIsbn = document.createElement("td");
-        let tdCodigo = document.createElement("td");
-        let tdData = document.createElement("td");
-        let tdAcoes = document.createElement("td");
-
-        // Preenchimento dos dados
-        tdId.textContent = item.id;
-        tdNome.textContent = item.nome;
-        tdIsbn.textContent = item.isbn;
-        tdCodigo.textContent = item.codigoBarras;
-        tdData.textContent = formatarData(item.data); // Formata a data visualmente
-
-        // --- Botões de Ação ---
-        
-        // Botão Editar
-        const btnEditar = document.createElement("button");
-        btnEditar.textContent = "Editar";
-        btnEditar.style.marginRight = "5px";
-        btnEditar.addEventListener("click", () => editar(item.id));
-
-        // Botão Excluir
-        const btnExcluir = document.createElement("button");
-        btnExcluir.textContent = "Excluir";
-        btnExcluir.style.backgroundColor = "#ff4d4d"; 
-        btnExcluir.style.color = "white";
-        btnExcluir.addEventListener("click", () => excluir(item.id));
-
-        tdAcoes.appendChild(btnEditar);
-        tdAcoes.appendChild(btnExcluir);
-
-        // Adiciona as células na linha
-        tr.appendChild(tdId);
-        tr.appendChild(tdNome);
-        tr.appendChild(tdIsbn);
-        tr.appendChild(tdCodigo);
-        tr.appendChild(tdData);
-        tr.appendChild(tdAcoes);
-
-        // Adiciona a linha na tabela
+        tr.innerHTML = `
+          <td>${item.id_exemplar}</td>
+          <td>${item.nome_livro}</td>
+          <td>${item.isbn}</td>
+          <td>${item.codigo_de_barras}</td> 
+          <td>${formatarDataVisual(item.data_aquisicao)}</td>
+          <td><span class="status-badge ${classeStatus}">${item.status}</span></td>
+          <td>
+              <button class="btn btn-pequeno btn-salvar" onclick='abrirModal(${JSON.stringify(item)})'>Editar</button>
+              <button class="btn btn-pequeno btn-excluir" onclick="excluir(${item.id_exemplar})">Excluir</button>
+          </td>
+        `;
         tableAcervo.appendChild(tr);
       });
     }
 
-    // Chama a renderização ao carregar a página
-    renderizarTabela();
+    // --- 2. MODAL ---
+    function abrirModal(item) {
+      document.getElementById('edit-id').value = item.id_exemplar;
+      document.getElementById('edit-titulo').value = item.nome_livro;
+      document.getElementById('edit-isbn').value = item.isbn;
+      document.getElementById('edit-codigo').value = item.codigo_de_barras;
+      
+      const selectStatus = document.getElementById('edit-status');
+      
+      // Lógica Especial: Se o livro estiver EMPRESTADO, o select mostra qual opção?
+      // O usuário pediu apenas 'Disponível', 'Manutenção', 'Perdido'.
+      // Se estiver 'Emprestado', vamos selecionar 'Disponível' provisoriamente ou avisar.
+      // Aqui, simplesmente setamos o valor. Se 'Emprestado' não existe no <option>, ele fica em branco ou no primeiro.
+      // Vamos forçar que, se for 'Emprestado', ele mude visualmente para 'Disponível' (para caso de devolução manual forçada)
+      // OU mantemos o valor se ele existir na lista.
+      
+      if (['Disponível', 'Manutenção', 'Perdido'].includes(item.status)) {
+          selectStatus.value = item.status;
+      } else {
+          // Se for 'Emprestado', deixamos em 'Disponível' como padrão para edição
+          selectStatus.value = 'Disponível'; 
+      }
 
+      if(item.data_aquisicao) {
+          document.getElementById('edit-data').value = item.data_aquisicao.split('T')[0];
+      } else {
+          document.getElementById('edit-data').value = "";
+      }
 
-    // --- SISTEMA DE BUSCA ---
+      modal.classList.add('active');
+    }
 
-    const campoBusca = document.getElementById("texto-form");
+    function fecharModal() { modal.classList.remove('active'); }
+    modal.addEventListener('click', e => { if (e.target === modal) fecharModal(); });
 
-    campoBusca.addEventListener("input", function (e) {
-      const texto = campoBusca.value.toLowerCase();
-      const linhas = document.querySelectorAll("#lista-acervo tr");
+    // --- 3. SALVAR (PUT) ---
+    function salvarEdicao() {
+      const id = document.getElementById('edit-id').value;
+      
+      const dadosAtualizados = {
+        codigo_barras: document.getElementById('edit-codigo').value,
+        data_aquisicao: document.getElementById('edit-data').value,
+        status: document.getElementById('edit-status').value // Enviando o novo status
+      };
 
-      linhas.forEach(tr => {
-        // A segunda coluna (índice 1) é o Nome do Livro
-        const colunaNome = tr.querySelectorAll("td")[1]; 
+      fetch(`http://localhost:3000/api/acervo/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dadosAtualizados)
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert("Exemplar atualizado!");
+        fecharModal();
+        carregarAcervo(); 
+      })
+      .catch(err => alert("Erro ao atualizar"));
+    }
 
-        if (colunaNome) {
-          const nome = colunaNome.textContent.toLowerCase();
-          if (nome.includes(texto)) {
-            tr.style.display = "";
-          } else {
-            tr.style.display = "none";
-          }
-        }
+    // --- 4. EXCLUIR (DELETE) ---
+    function excluir(id) {
+      // Aviso mais claro para o usuário
+      if (!confirm("ATENÇÃO: Ao excluir este exemplar, todo o histórico de empréstimos dele também será apagado. Deseja continuar?")) {
+          return;
+      }
+
+      fetch(`http://localhost:3000/api/acervo/${id}`, {
+        method: 'DELETE'
+      })
+      .then(async res => {
+         // Se o servidor retornar erro (status 500), pegamos a mensagem
+         if (!res.ok) {
+             const erro = await res.json();
+             throw new Error(erro.error || "Erro desconhecido no servidor");
+         }
+         return res.json();
+      })
+      .then(data => {
+        alert("Exemplar excluído com sucesso!");
+        carregarAcervo(); // Atualiza a tabela na hora
+      })
+      .catch(err => {
+          console.error(err);
+          alert("Não foi possível excluir: " + err.message);
+      });
+    }
+
+    // --- 5. BUSCA ---
+    document.getElementById("texto-form").addEventListener("input", function () {
+      const texto = this.value.toLowerCase();
+      document.querySelectorAll("#lista-acervo tr").forEach(tr => {
+        const colTitulo = tr.querySelectorAll("td")[1].textContent.toLowerCase();
+        const colCodigo = tr.querySelectorAll("td")[3].textContent.toLowerCase();
+        tr.style.display = (colTitulo.includes(texto) || colCodigo.includes(texto)) ? "" : "none";
       });
     });
+    document.getElementById("form-busca-livro").addEventListener("submit", e => e.preventDefault());
 
-    const envioForm = document.getElementById("form-busca-acervo");
-    envioForm.addEventListener("submit", function (e) {
-      e.preventDefault();
-    });
-
-
-    // --- FUNÇÕES DE EDIÇÃO E EXCLUSÃO ---
-
-    function editar(id) {
-      const dados = carregarDoStorage();
-      const item = dados.acervo.find(l => l.id === id);
-
-      if (!item) return alert("Exemplar não encontrado.");
-
-      // Como o nome e ISBN vêm do cadastro de Livros, editamos apenas 
-      // o código de barras e a data do exemplar físico.
-
-      const novoCodigo = prompt("Novo Código de Barras:", item.codigoBarras);
-      if (novoCodigo !== null) item.codigoBarras = novoCodigo;
-
-      const novaData = prompt("Nova Data (AAAA-MM-DD):", item.data);
-      if (novaData !== null) item.data = novaData;
-      
-      // Salva e Recarrega
-      salvarNoStorage(dados);
-      renderizarTabela(); 
-    }
-
-    function excluir(id) {
-      if (!confirm("Deseja realmente excluir este exemplar do acervo?")) return;
-
-      const dados = carregarDoStorage();
-      // Filtra o array removendo o item com o ID selecionado
-      dados.acervo = dados.acervo.filter(l => l.id !== id);
-
-      salvarNoStorage(dados);
-      renderizarTabela();
-    }
-
+    carregarAcervo();
   </script>
-
-</body>
-</html>

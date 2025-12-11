@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Acervo - Libre Turing</title>
+    <link rel="stylesheet" href="../styles/style-relatorio.css">
+</head>
+<body>
+
+    
+        <a href="menu.html" class="back-link">← Voltar ao Menu</a>
+        
+        <h2>Relatório de Disponibilidade de Acervo</h2>
+        
+        <p id="resumo-topo">Total de Exemplares Físicos: <strong id="total-geral">...</strong></p>
+
+        <div class="container-busca">
+            <svg class="icone-busca" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+            </svg>
+            <input type="text" id="input-busca" class="input-busca" placeholder="Pesquisar livro pelo título...">
+        </div>
+
+        <div class="container-tabela">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Título do Livro</th>
+                        <th>Total Físico</th>
+                        <th>Acervo Disponível</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-corpo">
+                    <tr>
+                        <td colspan="3" style="text-align:center; padding: 2rem;">Carregando dados...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="container-consulta">
+            <a href="menu.html" class="link-consulta">Voltar para o Menu</a>
+        </div>
+
+    
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+    carregarRelatorio();
+    configurarPesquisa();
+});
+
+async function carregarRelatorio() {
+    const tbody = document.getElementById('tabela-corpo');
+    const totalGeralSpan = document.getElementById('total-geral');
+
+    try {
+        const response = await fetch('/api/relatorio-acervo');
+        if (!response.ok) throw new Error('Erro na API');
+        const dados = await response.json();
+        
+        tbody.innerHTML = ''; 
+        let somaTotalExemplares = 0;
+
+        dados.forEach(livro => {
+            somaTotalExemplares += livro.total_exemplares;
+
+            const tr = document.createElement('tr');
+            
+            // Define classes baseadas no seu padrão visual
+            const classeStatus = livro.disponiveis > 0 ? 'status-ok' : 'status-esgotado';
+            const textoStatus = livro.disponiveis > 0 ? `${livro.disponiveis} un.` : 'Esgotado (0)';
+
+            tr.innerHTML = `
+                <td>${livro.titulo}</td>
+                <td>${livro.total_exemplares}</td>
+                <td><span class="status-badge ${classeStatus}">${textoStatus}</span></td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+
+        totalGeralSpan.textContent = somaTotalExemplares;
+
+    } catch (error) {
+        console.error("Erro:", error);
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red;">Erro ao conectar com o servidor.</td></tr>`;
+    }
+}
+
+function configurarPesquisa() {
+    // Usando o ID que colocamos no input dentro da div .container-busca
+    const inputBusca = document.getElementById('input-busca');
+    
+    inputBusca.addEventListener('input', function() {
+        const termo = this.value.toLowerCase();
+        const linhas = document.querySelectorAll('#tabela-corpo tr');
+
+        linhas.forEach(linha => {
+            if(linha.cells.length > 1) { // Evita erro se for a linha de "Carregando"
+                const titulo = linha.cells[0].textContent.toLowerCase();
+                if (titulo.includes(termo)) {
+                    linha.style.display = '';
+                } else {
+                    linha.style.display = 'none';
+                }
+            }
+        });
+    });
+}
+    </script>
+</body>
+</html>

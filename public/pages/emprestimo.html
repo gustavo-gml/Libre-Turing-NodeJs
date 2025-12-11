@@ -3,207 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Empréstimo - Libre Turing</title>
+    <title>Novo Empréstimo - Libre Turing</title>
+    
     <link rel="stylesheet" href="../styles/style-global.css">
+    <link rel="stylesheet" href="../styles/style-emprestimos.css">
     <link rel="icon" type="image/png" href="../images/favicon.ico">
 </head>
 <body>
     <div class="container">
         <a href="menu.html" class="back-link">← Voltar ao Menu</a>
-        <section id="emprestimo">
-            <h2>Empréstimo de Livro</h2>
-            <p>Use o leitor de código de barras ou selecione manualmente o livro e o aluno.</p>
-            
-            <form id="form-emprestimo" class="form-login">
+        
+        <h2>Realizar Empréstimo</h2>
+        <p class="subtitle">
+            Busque o livro e o aluno digitando nome, código ou CPF.
+        </p>
+        
+        <form id="form-emprestimo">
 
-                <label for="scanner-livro-acervo">Código do Livro (Leitor):</label>
-                <input type="text" id="scanner-livro-acervo" placeholder="Use o leitor ou digite o código de barras">
+            <label for="input-livro">Buscar Livro (Nome, ISBN ou Cód. Barras):</label>
+            <input type="text" list="lista-livros" id="input-livro" placeholder="Digite para buscar..." required autocomplete="off">
+            <datalist id="lista-livros"></datalist>
+            <input type="hidden" id="id-exemplar-selecionado">
 
-                <label for="select-livro-acervo">...ou Selecione o Livro Manualmente:</label>
-                <select id="select-livro-acervo" required>
-                    <option value="">Selecione um livro do acervo</option>
-                </select>
+            <label for="input-aluno">Buscar Aluno (Nome ou RA):</label>
+            <input type="text" list="lista-alunos" id="input-aluno" placeholder="Digite para buscar..." required autocomplete="off">
+            <datalist id="lista-alunos"></datalist>
+            <input type="hidden" id="ra-aluno-selecionado">
 
-                <hr> <label for="scanner-aluno-ra">RA do Aluno (Leitor):</label>
-                <input type="text" id="scanner-aluno-ra" placeholder="Digite o RA do aluno">
+            <label for="data-devolucao">Devolução Prevista:</label>
+            <input type="date" id="data-devolucao" required>
 
-                <label for="select-aluno-ra">...ou Selecione o Aluno Manualmente:</label>
-                <select id="select-aluno-ra" required>
-                    <option value="">Selecione um aluno</option>
-                </select>
-                
-                <hr> <label for="data-emprestimo">Data do Empréstimo:</label>
-                <input type="date" id="data-emprestimo" required>
-                
-                <label for="data-devolucao">Data Prevista de Devolução:</label>
-                <input type="date" id="data-devolucao" required>
+            <button type="submit">Confirmar Empréstimo</button>
 
-                <button type="submit">Realizar Empréstimo</button>
-
-            </form> 
-
-        </section> 
-
+        </form> 
     </div>
-                <script>
-                    function carregarDoStorage() {
-        const dados = JSON.parse(localStorage.getItem("dados")) || {};
-        // Garante que todas as "tabelas" (arrays) existem
-        if (!dados.livros) dados.livros = [];
-        if (!dados.acervo) dados.acervo = [];
-        if (!dados.alunos) dados.alunos = []; 
-        if (!dados.emprestimos) dados.emprestimos = []; 
-        return dados;
-    }
 
-    function salvarNoStorage(objeto) {
-        localStorage.setItem("dados", JSON.stringify(objeto));
-    }
+    <script>
+        let listaGlobalLivros = [];
+        let listaGlobalAlunos = [];
 
-    // Função para popular os selects
-    function atualizarSelects() {
-        const dados = carregarDoStorage();
-        const selectLivro = document.getElementById("select-livro-acervo");
-        const selectAluno = document.getElementById("select-aluno-ra");
+        async function carregarDados() {
+            try {
+                // Carrega Acervo
+                const resLivros = await fetch('http://localhost:3000/api/acervo');
+                const livros = await resLivros.json();
+                
+                // Carrega Alunos
+                const resAlunos = await fetch('http://localhost:3000/api/alunos');
+                const alunos = await resAlunos.json();
 
-        // Limpa os selects
-        selectLivro.innerHTML = '<option value="">Selecione um livro do acervo</option>';
-        selectAluno.innerHTML = '<option value="">Selecione um aluno</option>';
+                // DEBUG: Mostra no console o que chegou do servidor
+                console.log("Livros carregados:", livros); 
+                console.log("Alunos carregados:", alunos);
 
-        // Popula o select de Livros (Acervo)
-        dados.acervo.forEach(item => {
-            let opt = document.createElement("option");
-            opt.value = item.codigoBarras; // a "chave estrangeira"
-            opt.textContent = `${item.nome} (Cód: ${item.codigoBarras})`; 
-            selectLivro.appendChild(opt);
-        });
+                listaGlobalLivros = livros;
+                listaGlobalAlunos = alunos;
 
-        // Popula o select de Alunos
-        dados.alunos.forEach(aluno => {
-            let opt = document.createElement("option");
-            opt.value = aluno.ra; // a "chave estrangeira"
-            opt.textContent = `${aluno.nome} (RA: ${aluno.ra})`;
-            selectAluno.appendChild(opt);
-        });
-    }
+                popularDatalists();
 
-    
-    // --- LÓGICA DE SINCRONIZAÇÃO (Leitor <-> Select) ---
-
-    // Pega os 4 elementos que serão sincronizados
-    const scannerLivro = document.getElementById("scanner-livro-acervo");
-    const selectLivro = document.getElementById("select-livro-acervo");
-    const scannerAluno = document.getElementById("scanner-aluno-ra");
-    const selectAluno = document.getElementById("select-aluno-ra");
-
-    // 1. Sincroniza Leitor de Livro -> Select de Livro
-    // (Quando o usuário digita/escaneia no <input>)
-    scannerLivro.addEventListener("input", function() {
-        const codigoDigitado = this.value;
-        // Tenta encontrar o <option> correspondente
-        const optionExiste = selectLivro.querySelector(`option[value="${codigoDigitado}"]`);
-
-        if (optionExiste) {
-            selectLivro.value = codigoDigitado; // Encontrou! Seleciona no dropdown
-        } else {
-            selectLivro.value = ""; // Código inválido, reseta o dropdown
-        }
-    });
-
-    // 2. Sincroniza Select de Livro -> Leitor de Livro
-    // (Quando o usuário muda o <select> manualmente)
-    selectLivro.addEventListener("change", function() {
-        // Atualiza o <input> com o valor selecionado
-        scannerLivro.value = this.value; 
-    });
-
-
-    // 3. Sincroniza Leitor de Aluno -> Select de Aluno
-    scannerAluno.addEventListener("input", function() {
-        const raDigitado = this.value;
-        const optionExiste = selectAluno.querySelector(`option[value="${raDigitado}"]`);
-
-        if (optionExiste) {
-            selectAluno.value = raDigitado; // Encontrou! Seleciona
-        } else {
-            selectAluno.value = ""; // RA inválido, reseta
-        }
-    });
-
-    // 4. Sincroniza Select de Aluno -> Leitor de Aluno
-    selectAluno.addEventListener("change", function() {
-        scannerAluno.value = this.value;
-    });
-
-    // --- FIM DA LÓGICA DE SINCRONIZAÇÃO ---
-
-
-    // Lógica de SUBMIT (Envio do Formulário)
-    document.getElementById("form-emprestimo").addEventListener("submit", function (e) {
-        e.preventDefault(); // Impede o recarregamento da página
-        const dados = carregarDoStorage();
-
-        // Pega os valores dos <selects> 
-        const codigoLivro = document.getElementById("select-livro-acervo").value;
-        const raAluno = document.getElementById("select-aluno-ra").value;
-        const dataEmprestimo = document.getElementById("data-emprestimo").value;
-        const dataDevolucao = document.getElementById("data-devolucao").value;
-
-        // Validação (checa se os selects estão vazios)
-        // Isso impede envios com códigos de barra ou RAs inválidos
-        if (!codigoLivro || !raAluno) {
-            alert("Código do livro ou RA do aluno inválido. Por favor, selecione um item válido da lista.");
-            return;
+            } catch (error) {
+                console.error("Erro ao carregar dados:", error);
+                alert("Erro de conexão. Verifique o console (F12) para detalhes.");
+            }
         }
 
-        // Validação das datas
-        if (new Date(dataDevolucao) < new Date(dataEmprestimo)) {
-            alert("A data de devolução não pode ser anterior à data de empréstimo.");
-            return;
-        }
+        function popularDatalists() {
+            const datalistLivros = document.getElementById("lista-livros");
+            const datalistAlunos = document.getElementById("lista-alunos");
 
-        // Validação de disponibilidade do livro
-        const livroJaEmprestado = dados.emprestimos.find(emp => 
-            emp.livro.codigoBarras === codigoLivro && emp.status === "Ativo"
-        );
+            datalistLivros.innerHTML = "";
+            datalistAlunos.innerHTML = "";
 
-        if (livroJaEmprestado) {
-            alert("Erro: Este exemplar do livro já está emprestado!");
-            return;
+            // Filtra disponíveis
+            const disponiveis = listaGlobalLivros.filter(item => item.status === 'Disponível');
+
+            disponiveis.forEach(item => {
+                const option = document.createElement("option");
+                
+                // Tenta pegar os valores, se não existirem usa string vazia para não dar erro
+                const nome = item.nome_livro || item.titulo || "Sem Título";
+                const cod = item.codigo_de_barras || item.codigo || "S/N";
+                const isbn = item.isbn || "";
+
+                option.value = `${nome} (Cód: ${cod}) - ISBN: ${isbn}`;
+                option.setAttribute("data-id", item.id_exemplar || item.id); // Tenta id_exemplar ou id
+                
+                datalistLivros.appendChild(option);
+            });
+
+            listaGlobalAlunos.forEach(aluno => {
+                const option = document.createElement("option");
+                option.value = `${aluno.nome_aluno} (RA: ${aluno.ra})`;
+                option.setAttribute("data-ra", aluno.ra);
+                datalistAlunos.appendChild(option);
+            });
         }
         
-        // Busca os objetos completos para salvar no histórico
-        const alunoInfo = dados.alunos.find(a => a.ra === raAluno);
-        const livroInfo = dados.acervo.find(l => l.codigoBarras === codigoLivro);
-
-        // Cria o novo objeto de Empréstimo
-        const novoEmprestimo = {
-            id: dados.emprestimos.length + 1,
-            aluno: { ra: alunoInfo.ra, nome: alunoInfo.nome },
-            livro: { codigoBarras: livroInfo.codigoBarras, nome: livroInfo.nome },
-            dataEmprestimo: dataEmprestimo,
-            dataDevolucaoPrevista: dataDevolucao,
-            status: "Ativo" // Status inicial
-        };
-
-        // Salva no "banco de dados"
-        dados.emprestimos.push(novoEmprestimo);
-        salvarNoStorage(dados);
-
-        alert("Empréstimo realizado com sucesso!");
-        this.reset(); // Limpa o formulário (datas e selects)
-        
-        // Limpa também os campos do leitor (que o reset() não limpa)
-        scannerLivro.value = ""; 
-        scannerAluno.value = "";
-        
-        atualizarSelects(); // Recarrega os selects
-    });
-
-    // Roda a função inicial para popular os selects quando a página carregar
-    atualizarSelects();
-
-</script>
+        // Lógica de Seleção Livro
+        document.getElementById('input-livro').addEventListener('change', function() {
+            const valor = this.value;
+            const opcao = Array.from(document.getElementById('lista-livros').options)
+                               .find(opt => opt.value === valor);
             
+            if (opcao) {
+                document.getElementById('id-exemplar-selecionado').value = opcao.getAttribute('data-id');
+                this.classList.add('input-sucesso');
+                this.classList.remove('input-erro');
+            } else {
+                document.getElementById('id-exemplar-selecionado').value = "";
+                this.classList.add('input-erro');
+                this.classList.remove('input-sucesso');
+            }
+        });
+
+        // Lógica de Seleção Aluno
+        document.getElementById('input-aluno').addEventListener('change', function() {
+            const valor = this.value;
+            const opcao = Array.from(document.getElementById('lista-alunos').options)
+                               .find(opt => opt.value === valor);
+            
+            if (opcao) {
+                document.getElementById('ra-aluno-selecionado').value = opcao.getAttribute('data-ra');
+                this.classList.add('input-sucesso');
+                this.classList.remove('input-erro');
+            } else {
+                document.getElementById('ra-aluno-selecionado').value = "";
+                this.classList.add('input-erro');
+                this.classList.remove('input-sucesso');
+            }
+        });
+
+        // Envio do Formulário
+        document.getElementById("form-emprestimo").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const idExemplar = document.getElementById("id-exemplar-selecionado").value;
+            const raAluno = document.getElementById("ra-aluno-selecionado").value;
+            const dataDev = document.getElementById("data-devolucao").value;
+            const dataHoje = new Date().toISOString().split('T')[0];
+
+            if (!idExemplar || !raAluno) {
+                alert("Erro: Selecione um livro e um aluno válidos da lista (clique na opção sugerida).");
+                return;
+            }
+
+            if (new Date(dataDev) < new Date(dataHoje)) {
+                alert("Erro: Data de devolução inválida.");
+                return;
+            }
+
+            const payload = {
+                id_exemplar: idExemplar,
+                id_funcionario: 1, // Garanta que existe ID 1 na tabela funcionarios
+                ra_aluno: raAluno,
+                data_emprestimo: dataHoje,
+                data_prevista_devolucao: dataDev
+            };
+
+            fetch('http://localhost:3000/api/emprestimos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(async res => {
+                const data = await res.json(); // Lê o JSON da resposta
+                if (!res.ok) {
+                    // Se deu erro (500), joga pro catch com a mensagem do servidor
+                    throw new Error(data.error || "Erro desconhecido no servidor");
+                }
+                return data;
+            })
+            .then(data => {
+                alert("Sucesso! " + data.message);
+                document.getElementById("form-emprestimo").reset();
+                document.getElementById("id-exemplar-selecionado").value = "";
+                document.getElementById("ra-aluno-selecionado").value = "";
+                document.getElementById('input-livro').classList.remove('input-sucesso');
+                document.getElementById('input-aluno').classList.remove('input-sucesso');
+                carregarDados();
+            })
+            .catch(err => {
+                console.error(err);
+                // AQUI VAI APARECER O MOTIVO REAL DO ERRO
+                alert("Erro ao realizar empréstimo:\n" + err.message);
+            });
+        });
+
+        carregarDados();
+    </script>
 </body>
 </html>

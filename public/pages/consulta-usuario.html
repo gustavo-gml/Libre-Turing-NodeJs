@@ -2,70 +2,105 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Listagem</title>
+  <title>Listagem de Alunos</title>
+  
   <link rel="stylesheet" href="../styles/style-global.css">
   <link rel="stylesheet" href="../styles/style-consultas.css">
   <link rel="icon" type="image/png" href="../images/favicon.ico">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
   
-  <h1>Listagem de Usuários</h1>
-  <a href="menu.html" class="back-link">← Voltar</a>
-  <form id = "form-busca-usuario" class="form-busca-container">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+  <h1>Listagem de Usuários (Alunos)</h1>
+  <a href="menu.html" class="back-link">← Voltar ao menu</a>
+
+  <form id="form-busca-livro" class="container-busca">
+    <svg class="icone-busca" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
         <path d="M10 2a8 8 0 1 0 5.657 13.657l5.385 5.385 1.414-1.414-5.385-5.385A8 8 0 0 0 10 2Zm0 2a6 6 0 1 1 0 12A6 6 0 0 1 10 4Z"></path>
-      </svg>
-      <input id = "texto-form-usuario" type="text" placeholder="Buscar aluno por nome...">
+    </svg>
+    <input id="texto-form-usuario" class="input-busca" type="text" placeholder="Buscar aluno por nome ou RA...">
   </form>
 
   <div class="container-tabela">
-  <table >
-    <thead id = "teste">
-      <th>RA</th>
-      <th>Nome Aluno</th>
-      <th>CPF</th>
-      <th>E-mail</th>
-      <th>Data De Nascimento</th>
-      <th>Telefone</th>
-      <th>Curso</th>
-    </thead>
-    <tbody id ="table-alunos">
-      
-    </tbody>
-    
-  </table>
+    <table>
+      <thead>
+        <tr>
+          <th>RA</th>
+          <th>Nome Aluno</th>
+          <th>CPF</th>
+          <th>E-mail</th>
+          <th>Data Nasc.</th>
+          <th>Telefone</th>
+          <th>Curso</th>
+        </tr>
+      </thead>
+      <tbody id="table-alunos">
+        </tbody>
+    </table>
   </div>
-  <div class = "container-consulta">
+
+  <div class="container-consulta">
     <a class="link-consulta" href="../pages/menu.html">Voltar Para o Menu</a>
-    </div>
+  </div>
   
   <script>
-    function salvarNoStorage(objeto) {
-    localStorage.setItem("dados", JSON.stringify(objeto));
-  }
+    const tableAlunos = document.getElementById("table-alunos");
 
-  function carregarDoStorage() {
-    return JSON.parse(localStorage.getItem("dados")) || {alunos: []};
-  }
+    // --- 1. FUNÇÃO PARA FORMATAR DATA ---
+    function formatarDataVisual(dataISO) {
+       if (!dataISO) return "-";
+       // Pega apenas a parte YYYY-MM-DD
+       const dataPura = dataISO.split('T')[0];
+       const partes = dataPura.split("-");
+       // Retorna DD/MM/AAAA
+       return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
 
-   //Atualiza a lista conforme o que é digitado no campo de busca
+    // --- 2. CARREGAR ALUNOS DA API ---
+    function carregarAlunos() {
+      fetch('http://localhost:3000/api/alunos')
+        .then(res => res.json())
+        .then(alunos => {
+          renderizarTabela(alunos);
+        })
+        .catch(err => console.error("Erro ao carregar alunos:", err));
+    }
+
+    function renderizarTabela(alunos) {
+      tableAlunos.innerHTML = ""; // Limpa a tabela
+
+      alunos.forEach(aluno => {
+        let tr = document.createElement("tr");
+        
+        // Mapeando os campos que vêm do Banco de Dados (Snake Case)
+        tr.innerHTML = `
+            <td>${aluno.ra}</td>
+            <td>${aluno.nome_aluno}</td>
+            <td>${aluno.cpf}</td>
+            <td>${aluno.email}</td>
+            <td>${formatarDataVisual(aluno.data_nasc)}</td>
+            <td>${aluno.telefone || "-"}</td>
+            <td>${aluno.curso}</td>
+        `;
+
+        tableAlunos.appendChild(tr);
+      });
+    }
+
+    // --- 3. SISTEMA DE BUSCA (Front-end) ---
     const campoBusca = document.getElementById("texto-form-usuario");
 
     campoBusca.addEventListener("input", function (e) {
-    
-      
-
-      const texto = campoBusca.value.toLowerCase();
+      const texto = this.value.toLowerCase();
       const linhas = document.querySelectorAll("#table-alunos tr");
 
       linhas.forEach(tr => {
-        const colunaTitulo = tr.querySelectorAll("td")[1]; // segunda coluna
+        // Coluna 0 = RA, Coluna 1 = Nome do Aluno
+        const colRA = tr.querySelectorAll("td")[0].textContent.toLowerCase();
+        const colNome = tr.querySelectorAll("td")[1].textContent.toLowerCase();
 
-        if (!colunaTitulo) return;
-
-        const titulo = colunaTitulo.textContent.toLowerCase();
-
-        if (titulo.includes(texto)) {
+        if (colNome.includes(texto) || colRA.includes(texto)) {
             tr.style.display = "";
         } else {
             tr.style.display = "none";
@@ -73,52 +108,13 @@
       });
     });
 
+    // Impede o envio do formulário ao apertar Enter
+    document.getElementById("form-busca-livro").addEventListener("submit", e => e.preventDefault());
 
-    //Bloqueia o envio de formulário
-    const envioForm = document.getElementById("form-busca-usuario")
+    // Inicializa carregando os dados
+    carregarAlunos();
 
-    envioForm.addEventListener("submit", function(e){
-
-      e.preventDefault()
-    })
-
-    const dados = carregarDoStorage();
-    
-    const tableAlunos = document.getElementById("table-alunos");
-
-    dados.alunos.forEach(a => {
-      let tr = document.createElement("tr");
-      
-      
-      let tdRa = document.createElement("td");
-      let tdNomeAluno = document.createElement("td");
-      let tdCpf = document.createElement("td");
-      let tdEmail = document.createElement("td");
-      let tdDataDeNascimento = document.createElement("td");
-      let tdTelefone = document.createElement("td");
-      let tdCurso = document.createElement("td");
-      
-      tdRa.textContent = a.ra;
-      tdNomeAluno.textContent = a.nome;
-      tdCpf.textContent = a.cpf;
-      tdEmail.textContent = a.email;
-      tdDataDeNascimento.textContent = a.dataNascimento;
-      tdTelefone.textContent = a.telefone || "Não informado";
-      tdCurso.textContent = a.curso;
-      
-      tr.appendChild(tdRa);
-      tr.appendChild(tdNomeAluno);
-      tr.appendChild(tdCpf);
-      tr.appendChild(tdEmail);
-      tr.appendChild(tdDataDeNascimento);
-      tr.appendChild(tdTelefone);
-      tr.appendChild(tdCurso);
-
-      tableAlunos.appendChild(tr);
-
-  });
   </script>
-  <script src="../scripts/array_alunos.js"></script>
 
 </body>
 </html>
