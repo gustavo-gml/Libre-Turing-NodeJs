@@ -62,7 +62,7 @@ Antes de começar, certifique-se de ter instalado em sua máquina:
 
 1.  **Clone o repositório:**
     ```bash
-    git clone [https://github.com/seu-usuario/libre-turing.git](https://github.com/seu-usuario/libre-turing.git)
+    git clone https://github.com/gustavo-gml/Libre-Turing-NodeJs.git
     cd libre-turing
     ```
 
