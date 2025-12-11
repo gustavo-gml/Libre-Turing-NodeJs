@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro de Livro - Libre Turing</title>
+  <link rel="stylesheet" href="../styles/style-global.css">
+  <link rel="icon" type="image/png" href="../images/favicon.ico">
+</head>
+
+<body>
+  <div class="container">
+    <a href="menu.html" class="back-link">← Voltar</a>
+    <section id="cadastro-livro">
+      <h2>Cadastro de Livro</h2>
+      <p>Adicione os dados para a catalogação de um novo título</p>
+
+      <form class="form-login" id="form-cadastro-livro">
+        <label for="cadastro-nome-livro">Nome do Livro</label>
+        <input type="text" id="cadastro-nome-livro" name="cadastro-nome-livro" placeholder="Digite o nome do livro"
+          required>
+
+        <label for="cadastro-isbn-livro">ISBN do Livro</label>
+        <input type="text" id="cadastro-isbn-livro" name="cadastro-isbn-livro" placeholder="Digite o ISBN do livro">
+
+        <label for="cadastro-autor-livro">Autor do Livro</label>
+        <input type="text" id="cadastro-autor-livro" name="cadastro-autor-livro" placeholder="Digite o nome do autor">
+
+        <label for="cadastro-categoria-livro">Categoria do Livro</label>
+        <input type="text" id="cadastro-categoria-livro" name="cadastro-categoria-livro"
+          placeholder="Digite a categoria do livro" required>
+
+        <label for="cadastro-ano-livro">Ano do Livro</label>
+        <input type="number" id="cadastro-ano-livro" name="cadastro-ano-livro"
+          placeholder="Digite o ano de publicação do livro" step="1">
+
+        <button type="submit">Cadastrar Novo Título</button>
+      </form>
+    </section>
+  </div>
+
+  <script>
+    document.getElementById("form-cadastro-livro").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      // 1. Capturar os dados
+      let titulo = document.getElementById("cadastro-nome-livro").value;
+      let isbn = document.getElementById("cadastro-isbn-livro").value;
+      let categoria = document.getElementById("cadastro-categoria-livro").value;
+      let autor = document.getElementById("cadastro-autor-livro").value;
+      let anoInput = document.getElementById("cadastro-ano-livro").value;
+
+      // 2. Validações e Ajustes
+      if (!autor) autor = "-";
+      if (!isbn) isbn = "-";
+
+      // Se o usuário digitou algo, converte para número Inteiro.
+      // Se deixou vazio, envia null (o banco entende como "sem valor").
+      let anoParaEnviar = anoInput ? parseInt(anoInput) : null;
+
+      // 3. Montar o objeto
+      const novoLivro = {
+        titulo: titulo,
+        isbn: isbn,
+        autor: autor,
+        categoria: categoria,
+        ano: anoParaEnviar //vai um número ou null
+      };
+
+      console.log("Enviando:", novoLivro);
+
+      // 4. Enviar para o Backend
+      fetch('http://localhost:3000/api/livros', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(novoLivro)
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Erro na resposta do servidor');
+          }
+          return response.json();
+        })
+        .then(data => {
+          alert("Livro cadastrado com sucesso!");
+          document.getElementById("form-cadastro-livro").reset();
+        })
+        .catch(error => {
+          console.error("Erro:", error);
+          alert("Erro ao cadastrar. Verifique o console (F12) e se o servidor está rodando.");
+        });
+    });
+  </script>
+</body>
+
+</html>

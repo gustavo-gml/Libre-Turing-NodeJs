@@ -1,0 +1,167 @@
+@charset "UTF-8";
+
+/* Define 1rem = 10px para facilitar o cálculo */
+html {
+    font-size: 62.5%; /* 100% = 16px, 62.5% = 10px */
+}
+
+/* Estilos gerais para o corpo da página */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    line-height: 1.6;
+    margin: 0;
+    padding: 2rem; /* 20px */
+    font-size: 1.6rem; /* 16px */
+}
+
+/* Container principal para centralizar o conteúdo */
+.container {
+    max-width: 70rem; /* 700px */
+    margin: auto;
+    background: #ffffff;
+    padding: 2rem 3rem; /* 20px 30px */
+    border-radius: 0.8rem; /* 8px */
+    box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1); /* 10px */
+}
+
+/* Estilo dos títulos */
+h1, h2 {
+    text-align: center;
+    color: #444;
+}
+
+h2 {
+    border-bottom: 0.1rem solid #eeeeee; /* 1px */
+    padding-bottom: 1rem; /* 10px */
+    margin-top: 1.5rem; /* 15px */
+}
+
+.subtitle {
+    text-align: center;
+    margin-top: -1rem; /* -10px */
+    color: #666;
+}
+
+/* --- ESTILOS DE FORMULÁRIO GLOBAIS --- */
+
+/* Links de navegação (Voltar) */
+.back-link {
+    display: inline-block;
+    margin-bottom: 2rem; /* 20px */
+    color: #555;
+    text-decoration: none;
+    font-weight: bold;
+}
+.back-link:hover {
+    text-decoration: underline;
+}
+.back-link-menu {
+    display: inline-block;
+    margin-bottom: 0;
+    color: #555;
+    text-decoration: none;
+    font-weight: bold;
+    padding-top: 2%; /* % já é dinâmico */
+}
+.back-link-menu:hover {
+    text-decoration: underline;
+}
+
+p {
+    text-align: center;
+    color: #666;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin-bottom: 0.5rem; /* 5px */
+    font-weight: bold;
+}
+
+/* Estilo unificado para inputs, selects e textareas */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="date"],
+input[type="number"],
+select {
+    padding: 1rem; /* 10px */
+    margin-bottom: 2rem; /* 20px */
+    border: 0.1rem solid #dddddd; /* 1px */
+    border-radius: 0.4rem; /* 4px */
+    width: 100%;
+    box-sizing: border-box; 
+    font-size: 1.4rem; /* Garante tamanho da fonte */
+}
+
+/* --- BOTÕES GLOBAIS --- */
+
+/* Botão principal (Verde) */
+button {
+    padding: 1.2rem 1.5rem; /* 12px 15px */
+    border: none;
+    background-color: #28a745;
+    color: white;
+    border-radius: 0.4rem; /* 4px */
+    cursor: pointer;
+    font-size: 1.6rem; /* 16px */
+    font-weight: bold;
+}
+button:hover {
+    background-color: #218838;
+}
+
+/* Container para botões de formulário */
+.container-botoes {
+    display: flex;
+    flex-direction: column; /* Empilha os botões */
+    gap: 1rem; /* 10px */
+    margin-top: 1rem;
+}
+
+/* Garante que o botão principal ocupe toda a largura no container */
+.container-botoes button:not(.botao-secundario) {
+    width: 100%;
+}
+
+/* Botão secundário (Contorno) */
+/* 'em' é mantido pois é relativo ao font-size do próprio botão */
+.botao-secundario {
+    background-color: transparent;
+    color: #28a745;
+    border: 0.2rem solid #28a745; /* 2px */
+    width: auto;
+    padding: 0.5em 1.25em;
+    transition: all 0.3s ease;
+}
+.botao-secundario:hover {
+    background-color: #28a745;
+    color: #ffffff;
+}
+
+/* Classe de troca JS (idêntica ao .botao-secundario) */
+.changes {
+    background-color: transparent;
+    color: #28a745;
+    border: 0.2rem solid #28a745; /* 2px */
+    width: auto;
+    padding: 0.5em 1.25em;
+    transition: all 0.3s ease;
+}
+.changes:hover {
+    background-color: #28a745;
+    color: #ffffff;
+}
+
+/* --- CLASSES DE UTILIDADE GERAL --- */
+
+.error-message {
+    color: red;
+}
+

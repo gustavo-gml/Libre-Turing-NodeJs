@@ -1,0 +1,18 @@
+# Dependências do Node (PESADO - Nunca envie)
+node_modules/
+
+# Arquivos de ambiente e senhas (SEGURANÇA - Nunca envie)
+.env
+
+# Logs de erro (Lixo)
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Arquivos de sistema operacional (Lixo)
+.DS_Store
+Thumbs.db
+
+# Configurações de IDE (Opcional, mas recomendado ignorar)
+.vscode/
+.idea/

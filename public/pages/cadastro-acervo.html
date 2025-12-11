@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro de Acervo - Libre Turing</title>
+  <link rel="stylesheet" href="../styles/style-global.css">
+  <link rel="icon" type="image/png" href="../images/favicon.ico">
+</head>
+
+<body>
+  <div class="container">
+    <a href="menu.html" class="back-link">← Voltar</a>
+
+    <section id="cadastro-livro">
+
+      <h2>Cadastro de Acervo (Exemplar)</h2>
+
+      <p>Adicione um novo exemplar físico ao acervo.</p>
+
+      <form class="form-login" id="cadastroAcervo">
+
+        <label for="select-livro">Nome do Livro:</label>
+        <select id="select-livro" required>
+            <option value="">Carregando livros...</option>
+        </select>
+
+        <label for="campo-isbn">ISBN do Livro:</label>
+        <input type="text" id="campo-isbn" placeholder="Selecione o livro acima" readonly disabled>
+
+        <label for="codigo-barras">Código de Barras do Exemplar:</label>
+        <input type="text" id="codigo-barras" required placeholder="Ex: 801">
+
+        <label for="data-aquisicao">Data de aquisição:</label>
+        <input type="date" id="data-aquisicao" required>
+
+        <button type="submit">Cadastrar Exemplar</button>
+
+      </form>
+
+    </section>
+  </div>
+
+  <script>
+    const selectLivro = document.getElementById("select-livro");
+    const inputIsbn = document.getElementById("campo-isbn");
+    const formAcervo = document.getElementById("cadastroAcervo");
+
+    // 1. Função para buscar os livros no Node e preencher o Select
+    function carregarLivrosDoBanco() {
+      fetch('http://localhost:3000/api/livros')
+        .then(response => response.json())
+        .then(livros => {
+          
+          selectLivro.innerHTML = '<option value="">Selecione um livro...</option>';
+
+          livros.forEach(livro => {
+            const option = document.createElement("option");
+            option.value = livro.id;       // O valor que vai pro banco é o ID
+            option.textContent = livro.titulo; // O texto que o usuário vê é o Título
+            
+            // Guardamos o ISBN "escondido" no elemento para usar depois
+            option.dataset.isbn = livro.isbn || "Sem ISBN"; 
+            
+            selectLivro.appendChild(option);
+          });
+        })
+        .catch(err => {
+          console.error("Erro ao buscar livros:", err);
+          selectLivro.innerHTML = '<option>Erro ao carregar livros</option>';
+        });
+    }
+
+    // 2. Quando o usuário escolhe um livro, preenchemos o campo ISBN automaticamente
+    selectLivro.addEventListener("change", function() {
+      // Pega o <option> que foi selecionado
+      const opcaoSelecionada = selectLivro.options[selectLivro.selectedIndex];
+      
+      // Pega o ISBN que guardamos no dataset
+      const isbn = opcaoSelecionada.dataset.isbn;
+
+      if (selectLivro.value !== "") {
+          inputIsbn.value = isbn;
+      } else {
+          inputIsbn.value = "";
+      }
+    });
+
+    // 3. Enviar o formulário para o Node
+    formAcervo.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const idLivro = selectLivro.value;
+      const codigoBarras = document.getElementById("codigo-barras").value;
+      const dataAquisicao = document.getElementById("data-aquisicao").value;
+
+      if (!idLivro) {
+        alert("Por favor, selecione um livro.");
+        return;
+      }
+
+      const novoExemplar = {
+        id_livro: idLivro,
+        codigo_de_barras: codigoBarras,
+        data_aquisicao: dataAquisicao
+      };
+
+      fetch('http://localhost:3000/api/exemplares', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(novoExemplar)
+      })
+      .then(res => {
+          if(!res.ok) throw new Error("Erro na requisição");
+          return res.json();
+      })
+      .then(data => {
+        alert("Exemplar salvo com sucesso!");
+        formAcervo.reset();
+        inputIsbn.value = ""; // Limpa o campo ISBN visualmente
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Erro ao salvar. Verifique se o servidor está rodando e se o ID do livro existe.");
+      });
+    });
+
+    // Inicia carregando os livros assim que a tela abre
+    carregarLivrosDoBanco();
+
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Listagem de Acervo - Libre Turing</title>
+  <link rel="stylesheet" href="../styles/style-global.css">
+  <link rel="stylesheet" href="../styles/style-consultas.css">
+  <link rel="icon" type="image/png" href="../images/favicon.ico">
+</head>
+
+<body>
+  <h1>Listagem de Acervo</h1>
+  <a href="consultas-livros.html" class="back-link">← Voltar</a>
+  <form id="form-busca-acervo" class="form-busca-container">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px">
+      <path d="M10 2a8 8 0 1 0 5.657 13.657l5.385 5.385 1.414-1.414-5.385-5.385A8 8 0 0 0 10 2Zm0 2a6 6 0 1 1 0 12A6 6 0 0 1 10 4Z"></path>
+    </svg>
+    <input id="texto-form" type="text" placeholder="Buscar exemplar por nome...">
+  </form>
+
+  <div class="container-tabela">
+    
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Livro</th>
+          <th>ISBN</th>
+          <th>Cód. Barras</th>
+          <th>Data Aquisição</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="lista-acervo">
+        </tbody>
+    </table>
+  </div>
+
+  <div class="container-consulta">
+    <a class="link-consulta" href="../pages/menu.html">Voltar Para o Menu</a>
+  </div>
+
+  <script>
+    // --- FUNÇÕES AUXILIARES ---
+
+    function salvarNoStorage(objeto) {
+      localStorage.setItem("dados", JSON.stringify(objeto));
+    }
+
+    function carregarDoStorage() {
+      const dados = JSON.parse(localStorage.getItem("dados")) || {};
+      // Garante estrutura básica caso não exista
+      if (!dados.acervo) dados.acervo = [];
+      if (!dados.livros) dados.livros = [];
+      return dados;
+    }
+
+    function formatarData(dataISO) {
+      // Transforma AAAA-MM-DD em DD/MM/AAAA para ficar bonito na tabela
+      if (!dataISO) return "-";
+      const partes = dataISO.split("-");
+      return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    // --- CARREGAMENTO INICIAL ---
+
+    const tableAcervo = document.getElementById("lista-acervo");
+
+    // Função para renderizar (desenhar) a tabela usando dados.acervo
+    function renderizarTabela() {
+      const dados = carregarDoStorage(); // Carrega sempre atualizado
+      tableAcervo.innerHTML = ""; // Limpa a tabela
+
+      dados.acervo.forEach(item => {
+        let tr = document.createElement("tr");
+
+        // Criação das células
+        let tdId = document.createElement("td");
+        let tdNome = document.createElement("td");
+        let tdIsbn = document.createElement("td");
+        let tdCodigo = document.createElement("td");
+        let tdData = document.createElement("td");
+        let tdAcoes = document.createElement("td");
+
+        // Preenchimento dos dados
+        tdId.textContent = item.id;
+        tdNome.textContent = item.nome;
+        tdIsbn.textContent = item.isbn;
+        tdCodigo.textContent = item.codigoBarras;
+        tdData.textContent = formatarData(item.data); // Formata a data visualmente
+
+        // --- Botões de Ação ---
+        
+        // Botão Editar
+        const btnEditar = document.createElement("button");
+        btnEditar.textContent = "Editar";
+        btnEditar.style.marginRight = "5px";
+        btnEditar.addEventListener("click", () => editar(item.id));
+
+        // Botão Excluir
+        const btnExcluir = document.createElement("button");
+        btnExcluir.textContent = "Excluir";
+        btnExcluir.style.backgroundColor = "#ff4d4d"; 
+        btnExcluir.style.color = "white";
+        btnExcluir.addEventListener("click", () => excluir(item.id));
+
+        tdAcoes.appendChild(btnEditar);
+        tdAcoes.appendChild(btnExcluir);
+
+        // Adiciona as células na linha
+        tr.appendChild(tdId);
+        tr.appendChild(tdNome);
+        tr.appendChild(tdIsbn);
+        tr.appendChild(tdCodigo);
+        tr.appendChild(tdData);
+        tr.appendChild(tdAcoes);
+
+        // Adiciona a linha na tabela
+        tableAcervo.appendChild(tr);
+      });
+    }
+
+    // Chama a renderização ao carregar a página
+    renderizarTabela();
+
+
+    // --- SISTEMA DE BUSCA ---
+
+    const campoBusca = document.getElementById("texto-form");
+
+    campoBusca.addEventListener("input", function (e) {
+      const texto = campoBusca.value.toLowerCase();
+      const linhas = document.querySelectorAll("#lista-acervo tr");
+
+      linhas.forEach(tr => {
+        // A segunda coluna (índice 1) é o Nome do Livro
+        const colunaNome = tr.querySelectorAll("td")[1]; 
+
+        if (colunaNome) {
+          const nome = colunaNome.textContent.toLowerCase();
+          if (nome.includes(texto)) {
+            tr.style.display = "";
+          } else {
+            tr.style.display = "none";
+          }
+        }
+      });
+    });
+
+    const envioForm = document.getElementById("form-busca-acervo");
+    envioForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+    });
+
+
+    // --- FUNÇÕES DE EDIÇÃO E EXCLUSÃO ---
+
+    function editar(id) {
+      const dados = carregarDoStorage();
+      const item = dados.acervo.find(l => l.id === id);
+
+      if (!item) return alert("Exemplar não encontrado.");
+
+      // Como o nome e ISBN vêm do cadastro de Livros, editamos apenas 
+      // o código de barras e a data do exemplar físico.
+
+      const novoCodigo = prompt("Novo Código de Barras:", item.codigoBarras);
+      if (novoCodigo !== null) item.codigoBarras = novoCodigo;
+
+      const novaData = prompt("Nova Data (AAAA-MM-DD):", item.data);
+      if (novaData !== null) item.data = novaData;
+      
+      // Salva e Recarrega
+      salvarNoStorage(dados);
+      renderizarTabela(); 
+    }
+
+    function excluir(id) {
+      if (!confirm("Deseja realmente excluir este exemplar do acervo?")) return;
+
+      const dados = carregarDoStorage();
+      // Filtra o array removendo o item com o ID selecionado
+      dados.acervo = dados.acervo.filter(l => l.id !== id);
+
+      salvarNoStorage(dados);
+      renderizarTabela();
+    }
+
+  </script>
+
+</body>
+</html>

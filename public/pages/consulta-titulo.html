@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Listagem de Livros</title>
+  
+  <link rel="stylesheet" href="../styles/style-global.css">
+  
+  <link rel="stylesheet" href="../styles/style-consultas.css"> 
+  
+  <link rel="icon" type="image/png" href="../images/favicon.ico">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+  <h1>Listagem de Livros</h1>
+  <a href="menu.html" class="back-link">← Voltar</a>
+
+  <form id="form-busca-livro" class="container-busca">
+    <svg class="icone-busca" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px">
+      <path d="M10 2a8 8 0 1 0 5.657 13.657l5.385 5.385 1.414-1.414-5.385-5.385A8 8 0 0 0 10 2Zm0 2a6 6 0 1 1 0 12A6 6 0 0 1 10 4Z"></path>
+    </svg>
+    <input id="texto-form" class="input-busca" type="text" placeholder="Buscar por nome do livro...">
+  </form>
+
+  <div class="container-tabela">
+    <table>
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Titulo</th>
+          <th>ISBN</th>
+          <th>Categoria</th>
+          <th>Autor</th>
+          <th>Ano</th>
+          <th style="width: 220px;">Ações</th> </tr>
+      </thead>
+      <tbody id="lista-livros">
+        </tbody>
+    </table>
+  </div>
+
+  <div class="container-consulta">
+    <a class="link-consulta" href="../pages/menu.html">Voltar Para o Menu</a>
+  </div>
+
+  <div id="modal-editar" class="modal-overlay">
+    <div class="modal-content">
+      
+      <div class="modal-header">
+        <h2>Editar Livro</h2>
+      </div>
+
+      <input type="hidden" id="edit-id"> 
+      
+      <div class="form-group">
+        <label for="edit-titulo">Título:</label>
+        <input type="text" id="edit-titulo" class="form-input">
+      </div>
+      
+      <div class="form-group">
+        <label for="edit-isbn">ISBN:</label>
+        <input type="text" id="edit-isbn" class="form-input">
+      </div>
+      
+      <div class="form-group">
+        <label for="edit-categoria">Categoria:</label>
+        <input type="text" id="edit-categoria" class="form-input">
+      </div>
+      
+      <div class="form-group">
+        <label for="edit-autor">Autor:</label>
+        <input type="text" id="edit-autor" class="form-input">
+      </div>
+      
+      <div class="form-group">
+        <label for="edit-ano">Ano:</label>
+        <input type="number" id="edit-ano" class="form-input">
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-cancelar" onclick="fecharModal()">Cancelar</button>
+        <button class="btn btn-salvar" onclick="salvarEdicao()">Salvar Alterações</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tableLivros = document.getElementById("lista-livros");
+    const modal = document.getElementById("modal-editar");
+
+    // --- 1. CARREGAR LIVROS DO NODE ---
+    function carregarLivros() {
+      fetch('http://localhost:3000/api/livros')
+        .then(res => res.json())
+        .then(livros => {
+          renderizarTabela(livros);
+        })
+        .catch(err => console.error("Erro ao carregar:", err));
+    }
+
+    function renderizarTabela(livros) {
+      tableLivros.innerHTML = ""; 
+
+      livros.forEach(livro => {
+        let tr = document.createElement("tr");
+
+        
+        tr.innerHTML = `
+          <td>${livro.id}</td>
+          <td>${livro.titulo}</td>
+          <td>${livro.isbn}</td>
+          <td>${livro.categoria}</td>
+          <td>${livro.autor_nome || livro.autor}</td>
+          <td>${livro.ano}</td>
+          <td>
+             <button class="btn btn-editar" onclick='abrirModal(${JSON.stringify(livro)})'>
+                <i class="fa-solid fa-pen-to-square"></i> Editar
+             </button>
+             <button class="btn btn-excluir" onclick="excluir(${livro.id})">Excluir</button>
+          </td>
+        `;
+        tableLivros.appendChild(tr);
+      });
+    }
+
+    // --- 2. LÓGICA DO MODAL ---
+    function abrirModal(livro) {
+      document.getElementById('edit-id').value = livro.id;
+      document.getElementById('edit-titulo').value = livro.titulo;
+      document.getElementById('edit-isbn').value = livro.isbn;
+      document.getElementById('edit-categoria').value = livro.categoria;
+      document.getElementById('edit-autor').value = livro.autor || livro.autor_nome;
+      document.getElementById('edit-ano').value = livro.ano;
+
+      // Adiciona a classe 'active' para ativar a animação do CSS
+      modal.classList.add('active');
+    }
+
+    function fecharModal() {
+      // Remove a classe para esconder
+      modal.classList.remove('active');
+    }
+
+    // Fechar modal se clicar fora da caixa branca
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            fecharModal();
+        }
+    });
+
+    // --- 3. SALVAR EDIÇÃO (PUT) ---
+    function salvarEdicao() {
+      const id = document.getElementById('edit-id').value;
+      const dadosAtualizados = {
+        titulo: document.getElementById('edit-titulo').value,
+        isbn: document.getElementById('edit-isbn').value,
+        categoria: document.getElementById('edit-categoria').value,
+        autor: document.getElementById('edit-autor').value,
+        ano: document.getElementById('edit-ano').value
+      };
+
+      fetch(`http://localhost:3000/api/livros/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dadosAtualizados)
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert("Livro atualizado!");
+        fecharModal();
+        carregarLivros(); 
+      })
+      .catch(err => alert("Erro ao atualizar"));
+    }
+
+    // --- 4. EXCLUIR (DELETE) ---
+    function excluir(id) {
+      if (!confirm("Tem certeza que deseja apagar este livro?")) return;
+
+      fetch(`http://localhost:3000/api/livros/${id}`, {
+        method: 'DELETE'
+      })
+      .then(res => res.json())
+      .then(data => {
+        carregarLivros(); 
+      })
+      .catch(err => alert("Erro ao excluir"));
+    }
+
+    // --- 5. BUSCA ---
+    const campoBusca = document.getElementById("texto-form");
+    campoBusca.addEventListener("input", function () {
+      const texto = this.value.toLowerCase();
+      const linhas = document.querySelectorAll("#lista-livros tr");
+
+      linhas.forEach(tr => {
+        const colunaTitulo = tr.querySelectorAll("td")[1];
+        if (colunaTitulo) {
+          const titulo = colunaTitulo.textContent.toLowerCase();
+          tr.style.display = titulo.includes(texto) ? "" : "none";
+        }
+      });
+    });
+
+    document.getElementById("form-busca-livro").addEventListener("submit", e => e.preventDefault());
+
+    // Inicializa
+    carregarLivros();
+
+  </script>
+</body>
+</html>

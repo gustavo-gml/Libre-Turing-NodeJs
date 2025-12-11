@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Gerenciamento de Empréstimos - Libre Turing</title>
+  <link rel="stylesheet" href="../styles/style-global.css">
+  <link rel="stylesheet" href="../styles/style-consultas.css">
+  <link rel="icon" type="image/png" href="../images/favicon.ico">
+  
+  <style>
+    /* Estilos extras para os status */
+    .status-ativo {
+        color: #d9534f; /* Vermelho */
+        font-weight: bold;
+    }
+    .status-devolvido {
+        color: #5cb85c; /* Verde */
+        font-weight: bold;
+    }
+    .btn-devolver {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 0.9em;
+        margin-right: 5px;
+    }
+    .btn-devolver:hover {
+        background-color: #218838;
+    }
+    .btn-excluir {
+        background-color: #ff4d4d;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 0.9em;
+    }
+
+    .btn-excluir:hover {
+        background-color: #ff0000;
+        
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Consultar Empréstimos</h1>
+  <a href="menu.html" class="back-link">← Voltar</a>
+  
+  <form id="form-busca-emprestimos" class="form-busca-container">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px">
+      <path d="M10 2a8 8 0 1 0 5.657 13.657l5.385 5.385 1.414-1.414-5.385-5.385A8 8 0 0 0 10 2Zm0 2a6 6 0 1 1 0 12A6 6 0 0 1 10 4Z"></path>
+    </svg>
+    <input id="texto-form-emprestimo" type="text" placeholder="Buscar por aluno ou livro...">
+  </form>
+
+  <div class="container-tabela">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Aluno</th>
+          <th>Livro</th>
+          <th>Cód. Barras</th>
+          <th>Data Emp.</th>
+          <th>Data Prev.</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="lista-emprestimos">
+        </tbody>
+    </table>
+  </div>
+
+  <div class="container-consulta">
+    <a class="link-consulta" href="../pages/menu.html">Voltar Para o Menu</a>
+  </div>
+
+  <script>
+    // --- FUNÇÕES AUXILIARES ---
+
+    function carregarDoStorage() {
+      const dados = JSON.parse(localStorage.getItem("dados")) || {};
+      if (!dados.emprestimos) dados.emprestimos = [];
+      return dados;
+    }
+
+    function salvarNoStorage(objeto) {
+      localStorage.setItem("dados", JSON.stringify(objeto));
+    }
+
+    // Formata data de AAAA-MM-DD para DD/MM/AAAA
+    function formatarData(dataISO) {
+      if (!dataISO) return "-";
+      const partes = dataISO.split("-");
+      return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    // --- RENDERIZAÇÃO ---
+    const tableEmprestimos = document.getElementById("lista-emprestimos");
+
+    function renderizarTabela() {
+      const dados = carregarDoStorage();
+      tableEmprestimos.innerHTML = ""; // Limpa antes de desenhar
+
+      // Ordena: Primeiro os "Ativos", depois os "Devolvidos"
+      const listaOrdenada = dados.emprestimos.sort((a, b) => {
+          if (a.status === "Ativo" && b.status !== "Ativo") return -1;
+          if (a.status !== "Ativo" && b.status === "Ativo") return 1;
+          return 0;
+      });
+
+      listaOrdenada.forEach(emp => {
+        let tr = document.createElement("tr");
+
+        let tdId = document.createElement("td");
+        let tdAluno = document.createElement("td");
+        let tdLivro = document.createElement("td");
+        let tdCodigo = document.createElement("td");
+        let tdDataEmp = document.createElement("td");
+        let tdDataPrev = document.createElement("td");
+        let tdStatus = document.createElement("td");
+        let tdAcoes = document.createElement("td");
+
+        // Preenche dados
+        tdId.textContent = emp.id;
+        tdAluno.textContent = emp.aluno.nome;
+        tdLivro.textContent = emp.livro.nome;
+        tdCodigo.textContent = emp.livro.codigoBarras;
+        tdDataEmp.textContent = formatarData(emp.dataEmprestimo);
+        tdDataPrev.textContent = formatarData(emp.dataDevolucaoPrevista);
+        
+        // Lógica do Status
+        tdStatus.textContent = emp.status;
+        if (emp.status === "Ativo") {
+            tdStatus.className = "status-ativo";
+
+            // Botão DEVOLVER (Só aparece se estiver Ativo)
+            const btnDevolver = document.createElement("button");
+            btnDevolver.textContent = "Devolver ↩";
+            btnDevolver.className = "btn-devolver";
+            btnDevolver.onclick = function() { realizarDevolucao(emp.id); };
+            tdAcoes.appendChild(btnDevolver);
+
+        } else {
+            tdStatus.className = "status-devolvido";
+        }
+
+        // Botão EXCLUIR (Sempre aparece, caso tenha cadastrado errado)
+        const btnExcluir = document.createElement("button");
+        btnExcluir.textContent = "Excluir";
+        btnExcluir.className = "btn-excluir";
+        btnExcluir.onclick = function() { excluir(emp.id); };
+        tdAcoes.appendChild(btnExcluir);
+
+        // Monta a linha
+        tr.appendChild(tdId);
+        tr.appendChild(tdAluno);
+        tr.appendChild(tdLivro);
+        tr.appendChild(tdCodigo);
+        tr.appendChild(tdDataEmp);
+        tr.appendChild(tdDataPrev);
+        tr.appendChild(tdStatus);
+        tr.appendChild(tdAcoes);
+
+        tableEmprestimos.appendChild(tr);
+      });
+    }
+
+    // --- AÇÕES ---
+
+    function realizarDevolucao(id) {
+        if (!confirm("Confirmar a devolução deste livro?")) return;
+
+        const dados = carregarDoStorage();
+        const index = dados.emprestimos.findIndex(e => e.id === id);
+
+        if (index !== -1) {
+            dados.emprestimos[index].status = "Devolvido";
+            // Opcional: Salvar data real da devolução
+            // dados.emprestimos[index].dataDevolucaoReal = new Date().toISOString().split('T')[0];
+            
+            salvarNoStorage(dados);
+            renderizarTabela();
+            alert("Devolução registrada com sucesso!");
+        }
+    }
+
+    function excluir(id) {
+        if (!confirm("ATENÇÃO: Isso apagará o registro do histórico.\n\nPara devolver o livro, use o botão 'Devolver'.\nDeseja realmente excluir?")) return;
+        
+        const dados = carregarDoStorage();
+        dados.emprestimos = dados.emprestimos.filter(l => l.id !== id);
+        salvarNoStorage(dados);
+        renderizarTabela();
+    }
+
+    // --- BUSCA ---
+    const campoBusca = document.getElementById("texto-form-emprestimo");
+
+    campoBusca.addEventListener("input", function (e) {
+      const texto = campoBusca.value.toLowerCase();
+      const linhas = document.querySelectorAll("#lista-emprestimos tr");
+
+      linhas.forEach(tr => {
+        // Coluna 1 = Aluno, Coluna 2 = Livro
+        const aluno = tr.querySelectorAll("td")[1].textContent.toLowerCase();
+        const livro = tr.querySelectorAll("td")[2].textContent.toLowerCase();
+
+        if (aluno.includes(texto) || livro.includes(texto)) {
+            tr.style.display = "";
+        } else {
+            tr.style.display = "none";
+        }
+      });
+    });
+
+    document.getElementById("form-busca-emprestimos").addEventListener("submit", (e) => e.preventDefault());
+
+    // Inicia a tabela
+    renderizarTabela();
+
+  </script>
+
+</body>
+</html>

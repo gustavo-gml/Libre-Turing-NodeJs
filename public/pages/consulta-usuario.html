@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Listagem</title>
+  <link rel="stylesheet" href="../styles/style-global.css">
+  <link rel="stylesheet" href="../styles/style-consultas.css">
+  <link rel="icon" type="image/png" href="../images/favicon.ico">
+</head>
+<body>
+  
+  <h1>Listagem de Usuários</h1>
+  <a href="menu.html" class="back-link">← Voltar</a>
+  <form id = "form-busca-usuario" class="form-busca-container">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M10 2a8 8 0 1 0 5.657 13.657l5.385 5.385 1.414-1.414-5.385-5.385A8 8 0 0 0 10 2Zm0 2a6 6 0 1 1 0 12A6 6 0 0 1 10 4Z"></path>
+      </svg>
+      <input id = "texto-form-usuario" type="text" placeholder="Buscar aluno por nome...">
+  </form>
+
+  <div class="container-tabela">
+  <table >
+    <thead id = "teste">
+      <th>RA</th>
+      <th>Nome Aluno</th>
+      <th>CPF</th>
+      <th>E-mail</th>
+      <th>Data De Nascimento</th>
+      <th>Telefone</th>
+      <th>Curso</th>
+    </thead>
+    <tbody id ="table-alunos">
+      
+    </tbody>
+    
+  </table>
+  </div>
+  <div class = "container-consulta">
+    <a class="link-consulta" href="../pages/menu.html">Voltar Para o Menu</a>
+    </div>
+  
+  <script>
+    function salvarNoStorage(objeto) {
+    localStorage.setItem("dados", JSON.stringify(objeto));
+  }
+
+  function carregarDoStorage() {
+    return JSON.parse(localStorage.getItem("dados")) || {alunos: []};
+  }
+
+   //Atualiza a lista conforme o que é digitado no campo de busca
+    const campoBusca = document.getElementById("texto-form-usuario");
+
+    campoBusca.addEventListener("input", function (e) {
+    
+      
+
+      const texto = campoBusca.value.toLowerCase();
+      const linhas = document.querySelectorAll("#table-alunos tr");
+
+      linhas.forEach(tr => {
+        const colunaTitulo = tr.querySelectorAll("td")[1]; // segunda coluna
+
+        if (!colunaTitulo) return;
+
+        const titulo = colunaTitulo.textContent.toLowerCase();
+
+        if (titulo.includes(texto)) {
+            tr.style.display = "";
+        } else {
+            tr.style.display = "none";
+        }
+      });
+    });
+
+
+    //Bloqueia o envio de formulário
+    const envioForm = document.getElementById("form-busca-usuario")
+
+    envioForm.addEventListener("submit", function(e){
+
+      e.preventDefault()
+    })
+
+    const dados = carregarDoStorage();
+    
+    const tableAlunos = document.getElementById("table-alunos");
+
+    dados.alunos.forEach(a => {
+      let tr = document.createElement("tr");
+      
+      
+      let tdRa = document.createElement("td");
+      let tdNomeAluno = document.createElement("td");
+      let tdCpf = document.createElement("td");
+      let tdEmail = document.createElement("td");
+      let tdDataDeNascimento = document.createElement("td");
+      let tdTelefone = document.createElement("td");
+      let tdCurso = document.createElement("td");
+      
+      tdRa.textContent = a.ra;
+      tdNomeAluno.textContent = a.nome;
+      tdCpf.textContent = a.cpf;
+      tdEmail.textContent = a.email;
+      tdDataDeNascimento.textContent = a.dataNascimento;
+      tdTelefone.textContent = a.telefone || "Não informado";
+      tdCurso.textContent = a.curso;
+      
+      tr.appendChild(tdRa);
+      tr.appendChild(tdNomeAluno);
+      tr.appendChild(tdCpf);
+      tr.appendChild(tdEmail);
+      tr.appendChild(tdDataDeNascimento);
+      tr.appendChild(tdTelefone);
+      tr.appendChild(tdCurso);
+
+      tableAlunos.appendChild(tr);
+
+  });
+  </script>
+  <script src="../scripts/array_alunos.js"></script>
+
+</body>
+</html>

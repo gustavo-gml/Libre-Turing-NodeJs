@@ -1,0 +1,285 @@
+@charset "UTF-8";
+
+/* =========================================================
+   1. ESTILOS DE TABELA E CONSULTA
+   ========================================================= */
+
+.container-tabela {
+    overflow-x: auto; 
+    background-color: #ffffff;
+    border-radius: 0.8rem; 
+    box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1); 
+    margin-top: 2rem; 
+    padding: 0.5rem;
+}
+
+.container-tabela table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    color: #333;
+}
+
+/* Cabeçalho */
+.container-tabela thead {
+    background-color: #28a745;
+    color: #ffffff;
+}
+
+/* Células */
+.container-tabela th,
+.container-tabela td {
+    padding: 1rem 1.2rem;
+    vertical-align: middle; 
+}
+
+.container-tabela th {
+    font-weight: bold;
+    text-transform: uppercase; 
+    font-size: 0.9em;
+    letter-spacing: 0.05rem; 
+}
+
+/* Linhas e Cores Alternadas */
+.container-tabela tbody tr {
+    border-bottom: 0.1rem solid #eeeeee; 
+}
+.container-tabela tbody tr:last-of-type {
+    border-bottom: none;
+}
+.container-tabela tbody tr:nth-of-type(even) {
+    background-color: #f9f9f9;
+}
+.container-tabela tbody tr:hover {
+    background-color: #f0f0f0;
+}
+
+/* Links de Consulta (Abaixo da tabela) */
+.container-consulta {
+    display: flex;
+    gap: 1rem; 
+    margin-top: 1rem;
+}
+
+.link-consulta {
+    background-color: #28a745;
+    color: white;
+    border: 0.2rem solid #28a745; 
+    border-radius: 0.4rem; 
+    cursor: pointer;
+    width: auto;
+    padding: 0.5em 1.5em; 
+    transition: all 0.3s ease;
+    text-decoration: none;
+    font-size: 1.6rem; 
+    font-weight: bold;
+}
+
+.link-consulta:hover {
+    background-color: #218838;
+    border-color: #000000;
+}
+
+/* =========================================================
+   BARRA DE PESQUISA (MODO ROBUSTO)
+   ========================================================= */
+
+/* Usamos o ID #form-busca-livro para ter prioridade máxima */
+#form-busca-livro.container-busca {
+    display: flex !important;           /* Força os itens a ficarem lado a lado */
+    flex-direction: row !important;     /* Garante direção horizontal */
+    align-items: center !important;     /* Centraliza verticalmente (fio de prumo) */
+    justify-content: flex-start;        /* Alinha tudo à esquerda */
+    
+    width: 100%;
+    max-width: 500px;
+    height: 50px;                       /* Altura fixa para evitar distorções */
+    
+    border: 2px solid #28a745;          /* Borda Verde */
+    border-radius: 50px;                /* Arredondamento */
+    padding: 0 15px;                    /* Espaço interno lateral */
+    background-color: #fff;
+    box-sizing: border-box;             /* Garante que o tamanho inclua a borda */
+    overflow: hidden;                   /* Corta qualquer coisa que tente sair */
+}
+
+/* Força o estilo da Lupa dentro do ID específico */
+#form-busca-livro .icone-busca {
+    width: 22px;                        /* Largura fixa */
+    height: 22px;                       /* Altura fixa */
+    min-width: 22px;                    /* Impede que a lupa seja esmagada */
+    margin-right: 10px;                 /* Espaço entre a lupa e o texto */
+    fill: #28a745;                      /* Cor da lupa (se for SVG) */
+    color: #28a745;                     /* Cor da lupa (se for Fonte) */
+    display: flex;
+    align-items: center;
+}
+
+/* Força o estilo do Input dentro do ID específico */
+#form-busca-livro input {
+    flex: 1;                            /* Ocupa todo o espaço restante */
+    width: 100%;                        /* Garante largura */
+    height: 100%;                       /* Ocupa toda a altura da barra */
+    
+    border: 0 none !important;          /* REMOVE A BORDA CINZA (ESSENCIAL) */
+    outline: 0 none !important;         /* Remove linha azul de foco */
+    background: transparent !important; /* Fundo transparente */
+    box-shadow: none !important;        /* Remove sombras */
+    
+    font-size: 16px;
+    color: #333;
+    margin: 0 !important;               /* Remove margens estranhas */
+    padding: 0 !important;              /* Remove preenchimento interno */
+}
+
+/* Cor do texto de ajuda (placeholder) */
+#form-busca-livro input::placeholder {
+    color: #999;
+    opacity: 1;
+}
+
+/* =========================================================
+   3. BOTÕES GERAIS
+   ========================================================= */
+.btn {
+    padding: 0.7rem 1.4rem;
+    border: none;
+    border-radius: 0.4rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    display: inline-block;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+/* --- Botão EDITAR (VERDE CORRIGIDO) --- */
+.btn-editar {
+    background-color: #28a745;  /* VERDE */
+    color: #ffffff;
+    margin-right: 0.5rem;
+    
+    /* Flexbox para alinhar ícone e texto dentro do botão */
+    display: inline-flex; 
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-editar:hover {
+    background-color: #218838; /* Verde escuro no hover */
+}
+
+/* --- Botão EXCLUIR --- */
+.btn-excluir {
+    background-color: #dc3545; /* Vermelho */
+    color: white;
+}
+.btn-excluir:hover {
+    background-color: #a71d2a;
+}
+
+/* --- Botões do Modal --- */
+.btn-cancelar {
+    background-color: #e0e0e0;
+    color: #333;
+}
+.btn-cancelar:hover {
+    background-color: #d0d0d0;
+}
+
+.btn-salvar {
+    background-color: #28a745; 
+    color: white;
+}
+.btn-salvar:hover {
+    background-color: #218838;
+}
+
+/* =========================================================
+   4. MODAL DE EDIÇÃO
+   ========================================================= */
+
+.modal-overlay {
+    display: none; 
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(0.25rem); 
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-content {
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 0.8rem;
+    width: 90%;
+    max-width: 28rem; 
+    box-shadow: 0 0.6rem 1.5rem rgba(0, 0, 0, 0.2);
+    transform: translateY(-1.25rem);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.active .modal-content {
+    transform: translateY(0);
+}
+
+.modal-header h2 {
+    margin-top: 0;
+    margin-bottom: 1.25rem;
+    color: #333;
+    font-size: 1.5rem;
+    border-bottom: 0.1rem solid #f0f0f0;
+    padding-bottom: 0.6rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-weight: 600;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.6rem;
+    border: 0.1rem solid #ddd;
+    border-radius: 0.4rem;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+    box-sizing: border-box; 
+}
+
+.form-input:focus {
+    border-color: #28a745;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.1);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin-top: 1.5rem;
+    border-top: 0.1rem solid #f0f0f0;
+    padding-top: 1rem;
+}
